@@ -7,9 +7,40 @@ const TYPE_COLOR = {
   diagram: { bg: "#E1F5EE", text: "#085041" },
 };
 
+// Words that should never appear as a standalone "concept to review"
+const GAP_NOISE = new Set([
+  "which", "that", "this", "those", "these", "it", "them", "they",
+  "when", "where", "why", "how", "also", "then", "now", "just",
+  "column", "record", "table", "row", "item", "field", "date",
+  "name", "value", "type", "part", "thing", "number", "result",
+  "the", "a", "an", "and", "or", "of", "in", "on", "at", "to",
+  "with", "from", "for", "by", "is", "are", "was", "be",
+]);
+
+// Articles/determiners/pronouns that make a multi-word phrase meaningless
+const NOISE_STARTS = new Set([
+  "the", "a", "an", "this", "that", "these", "those",
+  "which", "what", "how", "its", "their", "our", "your",
+  "some", "any", "all", "each", "every", "both",
+]);
+
+function isMeaningfulGap(gap) {
+  if (!gap || gap.trim().length < 3) return false;
+  const words = gap.trim().toLowerCase().split(/\s+/);
+  // Single-word noise
+  if (words.length === 1 && GAP_NOISE.has(words[0])) return false;
+  // Starts with a determiner/pronoun
+  if (NOISE_STARTS.has(words[0])) return false;
+  // Every word is noise
+  if (words.every(w => GAP_NOISE.has(w) || NOISE_STARTS.has(w))) return false;
+  return true;
+}
+
 export default function ResultCard({ result, questionText, index }) {
-  const pct = result.percentage;
+  const pct      = result.percentage;
   const barColor = pct >= 70 ? "#639922" : pct >= 45 ? "#BA7517" : "#A32D2D";
+
+  const meaningfulGaps = (result.overall_gaps ?? []).filter(isMeaningfulGap);
 
   return (
     <div className={styles.card}>
@@ -50,7 +81,6 @@ export default function ResultCard({ result, questionText, index }) {
                   </span>
                 </div>
 
-                {/* Engine scores */}
                 <div className={styles.engines}>
                   <EngineBar label="Keywords" value={part.keyword_score} />
                   <EngineBar label="Concepts"  value={part.sbert_score} />
@@ -75,12 +105,12 @@ export default function ResultCard({ result, questionText, index }) {
         </div>
       )}
 
-      {/* Gaps */}
-      {result.overall_gaps.length > 0 && (
+      {/* Gaps — only shown when there are meaningful ones */}
+      {meaningfulGaps.length > 0 && (
         <div className={styles.gaps}>
           <p className={styles.gapsLabel}>Concepts to review</p>
           <div className={styles.gapTags}>
-            {result.overall_gaps.map((gap, i) => (
+            {meaningfulGaps.map((gap, i) => (
               <span key={i} className={styles.gapTag}>{gap}</span>
             ))}
           </div>
@@ -100,7 +130,7 @@ export default function ResultCard({ result, questionText, index }) {
 }
 
 function EngineBar({ label, value }) {
-  const pct = Math.round((value ?? 0) * 100);
+  const pct   = Math.round((value ?? 0) * 100);
   const color = pct >= 70 ? "#639922" : pct >= 45 ? "#BA7517" : "#A32D2D";
   return (
     <div className={styles.engineRow}>

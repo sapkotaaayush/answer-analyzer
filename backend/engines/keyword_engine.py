@@ -8,22 +8,56 @@ QUESTION_STOPWORDS = {
     "what", "explain", "describe", "list", "define", "use", "role",
     "way", "example", "detail", "note", "type", "advantage",
     "difference", "feature", "provide", "give", "write", "create",
-    "short", "proper", "different", "following", "two", "any"
+    "short", "proper", "different", "following", "two", "any",
 }
 
 GENERIC_TOKENS = QUESTION_STOPWORDS | {
     "java", "program", "application", "class", "object",
     "method", "interface", "value", "number", "result",
-    "user", "system", "data", "information", "process"
+    "user", "system", "data", "information", "process",
+}
+
+# Determiners, pronouns, and particles that should never appear in a keyword
+CHUNK_NOISE_STARTS = {
+    "the", "a", "an", "this", "that", "these", "those",
+    "which", "what", "how", "its", "their", "our", "your",
+    "some", "any", "all", "each", "every", "both",
+}
+
+# Single words that are meaningless as standalone concepts
+SINGLE_WORD_BLACKLIST = {
+    "which", "that", "this", "those", "these", "it", "them",
+    "they", "we", "he", "she", "when", "where", "why", "how",
+    "also", "then", "now", "just", "only", "very", "more",
+    "column", "record", "table", "row", "item", "field",
+    "thing", "part", "name", "date", "time", "year",
 }
 
 
-@dataclass
-class KeywordResult:
-    score: float
-    matched: list[str]
-    missed: list[str]
-    total_required: int
+def _is_meaningful_chunk(lemma: str) -> bool:
+    """
+    Return True only if a noun chunk lemma is worth keeping as a required term.
+    Rejects: starts with a determiner/pronoun, all-stopword phrases,
+             single blacklisted words, very short tokens.
+    """
+    if not lemma or len(lemma.strip()) < 3:
+        return False
+
+    words = lemma.strip().lower().split()
+
+    # Starts with a noise determiner/pronoun
+    if words[0] in CHUNK_NOISE_STARTS:
+        return False
+
+    # Every word is a stopword / noise word
+    if all(w in (CHUNK_NOISE_STARTS | QUESTION_STOPWORDS | GENERIC_TOKENS) for w in words):
+        return False
+
+    # Single word that is in the blacklist
+    if len(words) == 1 and words[0] in SINGLE_WORD_BLACKLIST:
+        return False
+
+    return True
 
 
 def extract_keywords(text: str) -> set[str]:
@@ -32,7 +66,7 @@ def extract_keywords(text: str) -> set[str]:
     chunks = {
         chunk.lemma_.strip()
         for chunk in doc.noun_chunks
-        if len(chunk.lemma_.strip()) > 2
+        if _is_meaningful_chunk(chunk.lemma_.strip())
         and chunk.lemma_.strip() not in QUESTION_STOPWORDS
     }
 
@@ -40,6 +74,7 @@ def extract_keywords(text: str) -> set[str]:
         ent.lemma_.lower()
         for ent in doc.ents
         if len(ent.lemma_) > 2
+        and ent.lemma_.lower() not in SINGLE_WORD_BLACKLIST
     }
 
     tokens = {
@@ -50,6 +85,7 @@ def extract_keywords(text: str) -> set[str]:
         and token.pos_ in ("NOUN", "PROPN")
         and len(token.lemma_) > 3
         and token.lemma_ not in GENERIC_TOKENS
+        and token.lemma_ not in SINGLE_WORD_BLACKLIST
     }
 
     return chunks | entities | tokens
@@ -79,6 +115,14 @@ def _tfidf_filter(
     return keyword_sets[target_index] | top_terms
 
 
+@dataclass
+class KeywordResult:
+    score: float
+    matched: list[str]
+    missed: list[str]
+    total_required: int
+
+
 def keyword_score(
     question_text: str,
     student_answer: str,
@@ -99,6 +143,9 @@ def keyword_score(
         if all_question_texts
         else all_kw_sets[0]
     )
+
+    # Final guard: remove any required term that slipped through and is noise
+    required = {t for t in required if _is_meaningful_chunk(t)}
 
     if not required:
         return KeywordResult(score=0.5, matched=[], missed=[], total_required=0)

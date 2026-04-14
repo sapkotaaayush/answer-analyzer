@@ -4,6 +4,7 @@ import QuestionList from "./components/QuestionList";
 import SubmitBar from "./components/SubmitBar";
 import ReferenceUpload from "./components/ReferenceUpload";
 import ResultsScreen from "./components/ResultsScreen";
+import ResultsSkeleton from "./components/ResultsSkeleton";
 import "./App.css";
 
 const API_BASE = "http://localhost:8000";
@@ -12,6 +13,7 @@ export default function App() {
   const [stage, setStage] = useState("upload");
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
+  const [diagrams, setDiagrams] = useState({});
   const [error, setError] = useState(null);
   const [hasReference, setHasReference] = useState(false);
   const [results, setResults] = useState(null);
@@ -53,6 +55,10 @@ export default function App() {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   }
 
+  function handleDiagramChange(questionId, file) {
+    setDiagrams((prev) => ({ ...prev, [questionId]: file }));
+  }
+
   function handleAddQuestion() {
     const newId = Date.now();
     setQuestions((prev) => [
@@ -84,19 +90,29 @@ export default function App() {
 
     const payload = {
       answers: questions.map((q) => ({
-        question_id: q.id,
-        question_text: q.text,
+        question_id:    q.id,
+        question_text:  q.text,
         student_answer: answers[q.id] ?? "",
-        max_marks: q.marks ?? 10,
+        max_marks:      q.marks ?? 10,
       })),
       has_reference: hasReference,
     };
 
+    const formData = new FormData();
+    formData.append("payload", JSON.stringify(payload));
+
+    Object.entries(diagrams).forEach(([questionId, file]) => {
+      if (file) {
+        const ext      = file.name.split(".").pop() || "jpg";
+        const fileName = `${questionId}.${ext}`;
+        formData.append("diagrams", file, fileName);
+      }
+    });
+
     try {
       const res = await fetch(`${API_BASE}/analyze`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
       const data = await res.json();
       setResults(data);
@@ -111,6 +127,7 @@ export default function App() {
     setStage("upload");
     setQuestions([]);
     setAnswers({});
+    setDiagrams({});
     setResults(null);
     setError(null);
     setHasReference(false);
@@ -129,14 +146,14 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>Answer Analyzer</h1>
-        {stage !== "upload" && stage !== "results" && (
+        {stage !== "upload" && stage !== "results" && stage !== "submitting" && (
           <span className="progress-pill">
             {answeredCount} / {totalCount} answered
           </span>
         )}
       </header>
 
-      {(stage === "answering" || stage === "submitting") && (
+      {stage === "answering" && (
         <ReferenceUpload onStatusChange={setHasReference} />
       )}
 
@@ -152,24 +169,30 @@ export default function App() {
           <UploadZone onUpload={handleUpload} />
         )}
 
-        {(stage === "answering" || stage === "submitting") && (
+        {stage === "answering" && (
           <>
             <QuestionList
               questions={questions}
               answers={answers}
+              diagrams={diagrams}
               onAnswerChange={handleAnswerChange}
+              onDiagramChange={handleDiagramChange}
               onAddQuestion={handleAddQuestion}
               onRemoveQuestion={handleRemoveQuestion}
               onQuestionTextChange={handleQuestionTextChange}
-              disabled={stage === "submitting"}
+              disabled={false}
             />
             <SubmitBar
               answeredCount={answeredCount}
               totalCount={totalCount}
               onSubmit={handleSubmit}
-              isSubmitting={stage === "submitting"}
+              isSubmitting={false}
             />
           </>
+        )}
+
+        {stage === "submitting" && (
+          <ResultsSkeleton questionCount={questions.length} />
         )}
 
         {stage === "results" && results && (
