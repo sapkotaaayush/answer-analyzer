@@ -1,0 +1,25 @@
+.screen {
+  padding: var(--space-xl);
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cards { margin-bottom: var(--space-xl); }
+
+.retryBtn {
+  width: 100%;
+  padding: var(--space-md);
+  border: 2px dashed var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--color-brand-mid);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.retryBtn:hover {
+  background: var(--color-brand-pale);
+  border-color: var(--color-brand-mid);
+}

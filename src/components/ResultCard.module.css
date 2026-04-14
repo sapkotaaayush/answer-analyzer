@@ -1,0 +1,177 @@
+.card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-default);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.qNum {
+  background: var(--color-brand-dark);
+  color: var(--color-text-on-brand);
+  border-radius: var(--radius-sm);
+  padding: 2px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.qText {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.score {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.marks {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.maxMarks {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.barTrack {
+  height: 5px;
+  background: var(--color-border-default);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+/* Parts */
+.parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-bg-app);
+  border-radius: var(--radius-md);
+}
+
+.partHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.typePill {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+}
+
+.partMarks {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Engine bars */
+.engines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.engineRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.engineLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  width: 64px;
+  flex-shrink: 0;
+}
+
+.engineTrack {
+  flex: 1;
+  height: 4px;
+  background: var(--color-border-default);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.engineFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.enginePct {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Gaps */
+.gaps { margin-bottom: var(--space-md); }
+
+.gapsLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+}
+
+.gapTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.gapTag {
+  font-size: var(--font-size-xs);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: #FFF2CC;
+  color: #633806;
+  border: 1px solid #FAC775;
+}
+
+/* Feedback */
+.feedback {
+  border-top: 1px solid var(--color-border-default);
+  padding-top: var(--space-sm);
+}
+
+.feedbackLine {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
